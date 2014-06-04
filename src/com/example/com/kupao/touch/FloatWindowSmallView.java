@@ -83,6 +83,7 @@ public class FloatWindowSmallView extends LinearLayout {
 	long downClickTime = 0; 
 	long upClickTime = 0;   
 	
+	
 	public FloatWindowSmallView(Context context) {
 		super(context);
 		mcontext = context;
@@ -197,15 +198,27 @@ private class TouchScreenThread extends Thread{
 	@Override
 	public void run() {
 		Log.i("zhangqian", "run blinker="+blinker);  
+
         while (blinker != null) {
-		    quicktouch();
-		    try {
-				sleep(200);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+            quicktouch();
+            try {
+                sleep(50);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
+        /*
+        DataOutputStream os = new DataOutputStream(su.getOutputStream());
+		try {
+			os.writeBytes("exit\n");
+			os.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		*/
+        
 	}
 	
 	public void stopthread() {  
@@ -213,39 +226,43 @@ private class TouchScreenThread extends Thread{
 	}  
 	
 	public void quicktouch(/*int posx, int posy, int count*/){
-		Process process = null;
-		DataInputStream os = null;
+		Process su = null;
+		DataOutputStream os = null;
 		int count = 0;
 
-		String[][] touchEvent = { 
-				{"/system/bin/sendevent", "/dev/input/event3", "1", "330", "1"},
-				{"/system/bin/sendevent", "/dev/input/event3", "3", "48" ,"20"},
-				{"/system/bin/sendevent", "/dev/input/event3", "3", "53", "502"},
-				{"/system/bin/sendevent", "/dev/input/event3","3", "54", "441"},
-				{"/system/bin/sendevent", "/dev/input/event3", "3", "57", "0",},
-				{"/system/bin/sendevent", "/dev/input/event3", "0", "0002", "0"},
-				{"/system/bin/sendevent", "/dev/input/event3", "0", "0000", "0"},
-				{"/system/bin/sendevent", "/dev/input/event3" ,"1", "330", "0"},
-				{"/system/bin/sendevent", "/dev/input/event3", "0", "2" ,"0"},
-				{"/system/bin/sendevent", "/dev/input/event3", "0", "0", "0"}
+		// x:502 y:441
+		String[] touchEvent = { 
+				"/system/bin/sendevent /dev/input/event3 1 330 1\n",
+				"/system/bin/sendevent /dev/input/event3 3 48 20\n",
+				"/system/bin/sendevent /dev/input/event3 3 53 502\n",
+				"/system/bin/sendevent /dev/input/event3 3 54 441\n",
+				"/system/bin/sendevent /dev/input/event3 3 57 0\n",
+				"/system/bin/sendevent /dev/input/event3 0 0002 0\n",
+				"/system/bin/sendevent /dev/input/event3 0 0000 0\n",
+				"/system/bin/sendevent /dev/input/event3 1 330 0\n",
+				"/system/bin/sendevent /dev/input/event3 0 2 0\n",
+				"/system/bin/sendevent /dev/input/event3 0 0 0\n",
 		};
-		//while (count++ < 100) {
-			//Log.d("xiamingliang", "sendevent"+count);
-	         for(int i = 0; i < touchEvent.length; i++){       
-		         try {
-					process = Runtime.getRuntime().exec(touchEvent[i]);
-					int ret = process.waitFor();
-					Log.d("xiamingliang", i + " ret=" +ret);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} finally {
-					process.destroy();
-				}
-	         }	    
-		//}
-	}
+		try {
+			su = Runtime.getRuntime().exec("su");
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		} 
+        os = new DataOutputStream(su.getOutputStream());
+        try {
+            for(int i = 0; i < touchEvent.length; i++){   
+                os.writeBytes(touchEvent[i]);
+            }
+            os.flush();
+            int ret =  su.waitFor();
+            Log.d("xiamingliang", "ret="+ret);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+        	 e.printStackTrace();
+        } finally {
+            su.destroy();
+        }
+    }	    
 }
 }
